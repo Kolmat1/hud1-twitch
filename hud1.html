@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BroLaLa Grand Finals Overlay</title>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: transparent;
+            font-family: 'Bebas Neue', sans-serif;
+            overflow: hidden; /* Empêche le défilement si les éléments dépassent */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100vw;
+            height: 100vh; /* S'assure que le body prend toute la hauteur de la fenêtre */
+        }
+
+        .overlay-top {
+            position: absolute; /* Positionne le HUD par rapport au body */
+            top: 100px; /* Descend le HUD de 100px depuis le haut de la fenêtre */
+            left: 50%;
+            transform: translateX(-50%); /* Centre le HUD horizontalement */
+            width: 650px; /* Largeur globale ajustée pour un design plus compact */
+            height: 90px; /* Hauteur ajustée */
+            display: flex;
+            align-items: center;
+            box-sizing: border-box;
+            background: #1a2a4c; /* Couleur de fond pour le conteneur principal */
+            border-radius: 10px; /* Coins arrondis pour l'ensemble de l'overlay */
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.7);
+            border-bottom: 4px solid #ffc107; /* Bordure inférieure globale */
+            padding: 0; /* Pas de padding sur le conteneur principal */
+            z-index: 10; /* Assure que le HUD est au-dessus des personnages */
+        }
+
+        .player-box {
+            display: flex;
+            align-items: center;
+            height: 100%;
+            flex: 1; /* Permet aux blocs de s'étendre et de se toucher */
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5); /* Ombre pour chaque bloc */
+            border: 3px solid #ffc107; /* Bordure nette pour chaque bloc */
+            padding: 0 15px; /* Espacement intérieur pour le contenu */
+            z-index: 1; /* Assure que les blocs sont en dessous de l'orbe */
+        }
+
+        .player-box.player1 { /* Section Plante */
+            background: linear-gradient(to right, #22c55e, #16a34a); /* Dégradé vert */
+            border-top-left-radius: 10px; /* Coins arrondis extérieurs */
+            border-bottom-left-radius: 10px;
+            border-top-right-radius: 0; /* Pas de coin arrondi sur le bord qui touche */
+            border-bottom-right-radius: 0;
+            justify-content: flex-start; /* Aligner le contenu à gauche */
+        }
+
+        .player-box.player2 { /* Section Feu */
+            background: linear-gradient(to left, #ef4444, #dc2626); /* Dégradé rouge */
+            border-top-right-radius: 10px; /* Coins arrondis extérieurs */
+            border-bottom-right-radius: 10px;
+            border-top-left-radius: 0; /* Pas de coin arrondi sur le bord qui touche */
+            border-bottom-left-radius: 0;
+            flex-direction: row-reverse; /* Inverser l'ordre pour aligner l'icône à droite */
+            justify-content: flex-start; /* Aligner le contenu à gauche (visuellement à droite à cause du row-reverse) */
+        }
+
+        .player-info {
+            max-width: 120px;
+            flex-shrink: 0;
+            text-align: left;
+            z-index: 2; /* Au-dessus de la texture */
+        }
+
+        .player-box.player2 .player-info {
+            text-align: right;
+        }
+
+        .player-name {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 24px;
+            line-height: 1;
+            letter-spacing: 1px;
+            color: #fff;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: block;
+        }
+
+        .bracket {
+            font-size: 14px;
+            opacity: 0.9;
+            color: #a0aec0;
+            margin-top: 1px;
+            letter-spacing: 0.5px;
+        }
+
+        .center-content-area { /* Conteneur pour les scores et titres */
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            position: absolute; /* Positionné absolument au centre de overlay-top */
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 4; /* Au-dessus de tout le reste */
+            flex-shrink: 0;
+            padding: 0 10px;
+        }
+
+        .center-score {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 54px; /* Rendu plus grand */
+            font-weight: bold;
+            background: #ffc107; /* Fond jaune */
+            color: transparent; /* Texte transparent, car OBS va overlay le score */
+            padding: 25px 10px; /* Plus grande hauteur, moins large */
+            border-radius: 6px;
+            box-shadow: 0 0 5px rgba(255, 193, 7, 0.7);
+            min-width: 50px; /* Ajusté pour la taille */
+            text-align: center;
+            flex-shrink: 0;
+            border: none; /* Pas de liseré */
+        }
+
+        .match-title-top {
+            font-size: 28px;
+            line-height: 0.8;
+            text-align: center;
+        }
+
+        .match-title-bottom {
+            font-size: 18px;
+            text-align: center;
+            margin-top: -4px;
+        }
+
+        .icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: #ffc107; /* Fond bleu marine */
+            border: 2px solid #ffc107; /* Liseré jaune */
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+            flex-shrink: 0;
+            z-index: 2; /* Au-dessus de la texture */
+            margin: 0 6px;
+            display: flex; /* Pour centrer le texte */
+            align-items: center; /* Pour centrer le texte */
+            justify-content: center; /* Pour centrer le texte */
+            color: #000000; /* Texte blanc */
+            font-size: 24px; /* Taille du texte P1/P2 */
+            font-weight: bold;
+        }
+
+        .overlay-bottom {
+            width: 500px;
+            height: 35px;
+            background: #0f172a;
+            border: 3px solid #ffc107;
+            border-radius: 8px;
+            clip-path: polygon(0% 0%, 100% 0%, 95% 100%, 5% 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #fff;
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 20px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+            padding: 0 15px;
+            box-sizing: border-box;
+            gap: 10px;
+            /* Positionnement absolu pour le placer sous overlay-top */
+            position: absolute;
+            top: 195px; /* top de overlay-top (100px) + height de overlay-top (90px) + 5px de marge */
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10; /* Assure que le HUD est au-dessus des personnages */
+        }
+
+        /* .country-flag rules removed as the elements are removed */
+
+        .bottom-text {
+            font-size: 20px;
+            margin: 0 6px;
+        }
+
+        .bottom-kingdom {
+            font-size: 20px;
+            color: #ffc107;
+        }
+
+        /* Styles de l'orbe d'eau */
+        .water-orb-container {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 120px; /* Taille de l'orbe */
+            height: 120px;
+            border-radius: 50%;
+            background: radial-gradient(circle at center, #60a5fa, #3b82f6, #2563eb);
+            box-shadow: 0 0 25px 10px rgba(59, 130, 246, 0.7), inset 0 0 12px 3px rgba(255, 255, 255, 0.4);
+            z-index: 3; /* L'orbe est au-dessus des blocs mais en dessous des scores */
+            animation: pulse 2s infinite alternate;
+        }
+
+        @keyframes pulse {
+            0% { transform: translate(-50%, -50%) scale(1); }
+            100% { transform: translate(-50%, -50%) scale(1.03); }
+        }
+
+        .water-texture::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-size: 60px 60px;
+            animation: wave 8s linear infinite;
+            opacity: 0.6;
+            z-index: -1;
+        }
+
+        @keyframes wave {
+            0% { background-position: 0 0; }
+            100% { background-position: 100% 0; }
+        }
+
+        /* Textures d'éléments stylisées (image inline) */
+        .player-box .texture-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0; /* En arrière-plan des infos joueur */
+            overflow: hidden;
+        }
+
+        /* Style pour la vidéo en arrière-plan du joueur 1 */
+        .player-box.player1 .texture-overlay video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover; /* Assure que la vidéo couvre toute la zone */
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: -1; /* Place la vidéo derrière les autres éléments */
+            border-radius: inherit; /* Hérite les coins arrondis du parent */
+        }
+
+        /* Style pour la vidéo en arrière-plan du joueur 2 */
+        .player-box.player2 .texture-overlay video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover; /* Assure que la vidéo couvre toute la zone */
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: -1; /* Place la vidéo derrière les autres éléments */
+            border-radius: inherit; /* Hérite les coins arrondis du parent */
+        }
+
+        /* Ajustements responsifs */
+        @media (max-width: 768px) {
+            .overlay-top {
+                width: 95%;
+                height: 80px;
+                top: 80px; /* Ajustement pour mobile */
+            }
+            .player-box {
+                width: 45%;
+            }
+            .player-name {
+                font-size: 20px;
+            }
+            .bracket {
+                font-size: 12px;
+            }
+            .center-score {
+                font-size: 40px; /* Ajustement pour mobile */
+                padding: 18px 10px; /* Ajustement pour mobile */
+                min-width: 40px;
+            }
+            .match-title-top {
+                font-size: 24px;
+            }
+            .match-title-bottom {
+                font-size: 16px;
+            }
+            .icon {
+                width: 45px;
+                height: 45px;
+                font-size: 20px;
+            }
+            .water-orb-container {
+                width: 90px;
+                height: 90px;
+            }
+            .overlay-bottom {
+                width: 80%;
+                font-size: 18px;
+                height: 30px;
+                top: calc(80px + 80px + 5px); /* top de overlay-top + height de overlay-top + marge */
+            }
+            .bottom-text, .bottom-kingdom {
+                font-size: 16px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .overlay-top {
+                height: 60px;
+                top: 60px; /* Ajustement pour mobile */
+            }
+            .player-box {
+                width: 40%;
+            }
+            .player-name {
+                font-size: 18px;
+            }
+            .bracket {
+                font-size: 10px;
+            }
+            .center-score {
+                font-size: 30px; /* Ajustement pour mobile */
+                padding: 12px 8px; /* Ajustement pour mobile */
+                min-width: 30px;
+            }
+            .match-title-top {
+                font-size: 20px;
+            }
+            .match-title-bottom {
+                font-size: 14px;
+            }
+            .icon {
+                width: 35px;
+                height: 35px;
+                font-size: 18px;
+            }
+            .water-orb-container {
+                width: 70px;
+                height: 70px;
+            }
+            .overlay-bottom {
+                font-size: 16px;
+                height: 25px;
+                top: calc(60px + 60px + 5px); /* top de overlay-top + height de overlay-top + marge */
+            }
+            .bottom-text, .bottom-kingdom {
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="overlay-top">
+        <div class="player-box player1">
+            <div class="texture-overlay">
+                <!-- La vidéo remplit maintenant tout le côté vert -->
+                <video src="" autoplay loop muted playsinline id="player1-video-bg"></video>
+            </div>
+            <!-- Remplacé l'img par un div pour le texte P1 -->
+            <div class="icon" id="player1-icon">P1</div>
+            <div class="player-info">
+                <div class="player-name" id="player1-name"></div>
+                <div class="bracket" id="player1-bracket"></div>
+            </div>
+        </div>
+
+        <div class="player-box player2">
+            <div class="texture-overlay">
+                <!-- La vidéo remplit maintenant tout le côté orange/rouge -->
+                <video src="" autoplay loop muted playsinline id="player2-video-bg"></video>
+            </div>
+            <div class="player-info">
+                <div class="player-name" id="player2-name"></div>
+                <div class="bracket" id="player2-bracket"></div>
+            </div>
+            <!-- Remplacé l'img par un div pour le texte P2 -->
+            <div class="icon" id="player2-icon">P2</div>
+        </div>
+
+        <!-- L'orbe d'eau est positionné absolument au centre de overlay-top -->
+        <div class="water-orb-container water-texture"></div>
+
+        <!-- La zone centrale avec les scores et titres -->
+        <div class="center-content-area">
+            <div class="center-score" id="player1-score"></div>
+            <div>
+                <div class="match-title-top" id="match-title-top"></div>
+                <div class="match-title-bottom" id="match-title-bottom"></div>
+            </div>
+            <div class="center-score" id="player2-score"></div>
+        </div>
+    </div>
+
+    <div class="overlay-bottom">
+        <!-- Les drapeaux des pays ont été retirés comme demandé -->
+        <div class="bottom-text" id="grand-final-text"></div>
+        <div class="bottom-kingdom" id="kingdom-text"></div>
+        <!-- Les drapeaux des pays ont été retirés comme demandé -->
+    </div>
+
+    <script>
+        // ==========================================================
+        // VARIABLES CONFIGURABLES PAR LE CLIENT
+        // Modifiez les valeurs ci-dessous pour personnaliser l'overlay.
+        // ==========================================================
+
+        const player1Data = {
+            name: "",
+            score: "", // Le score n'est plus affiché par le HTML, mais peut être conservé si OBS l'utilise
+            bracket: "", // Par exemple: "[W]" pour Winners, "[L]" pour Losers
+            // icon: "https://placehold.co/60x60/ffc107/FFFFFF?text=P1", // L'icône est maintenant un div statique
+            // flag: "https://flagcdn.com/us.svg", // Le drapeau a été retiré
+            videoBackground: "Twitch_Overlay_Background_Video_Ready.mp4" // URL de la vidéo de fond du joueur 1
+        };
+
+        const player2Data = {
+            name: "",
+            score: "", // Le score n'est plus affiché par le HTML, mais peut être conservé si OBS l'utilise
+            bracket: "", // Par exemple: "[W]" pour Winners, "[L]" pour Losers
+            // icon: "https://placehold.co/60x60/ffc107/FFFFFF?text=P2", // L'icône est maintenant un div statique
+            // flag: "https://flagcdn.com/fr.svg", // Le drapeau a été retiré
+            videoBackground: "Fire_Animation_Video_Ready.mp4" // URL de la vidéo de fond du joueur 2
+        };
+
+        const matchData = {
+            titleTop: "", // Titre principal du match (ex: "SUMMER")
+            titleBottom: "", // Sous-titre du match (ex: "CHAMPS")
+            grandFinalText: "", // Texte au centre de la barre du bas
+            kingdomText: "" // Texte à droite de la barre du bas
+        };
+
+        // ==========================================================
+        // NE PAS MODIFIER LE CODE CI-DESSOUS
+        // C'est la logique qui met à jour l'affichage avec les variables.
+        // ==========================================================
+
+        function updateOverlay() {
+            // Mise à jour du joueur 1
+            document.getElementById("player1-name").textContent = player1Data.name;
+            document.getElementById("player1-score").textContent = player1Data.score; // Ligne réactivée
+            document.getElementById("player1-bracket").textContent = player1Data.bracket;
+            // document.getElementById("player1-icon").src = player1Data.icon; // Ligne retirée car l'icône est un div
+            // document.getElementById("player1-flag").src = player1Data.flag; // Ligne retirée
+            document.getElementById("player1-video-bg").src = player1Data.videoBackground;
+
+            // Mise à jour du joueur 2
+            document.getElementById("player2-name").textContent = player2Data.name;
+            document.getElementById("player2-score").textContent = player2Data.score; // Ligne réactivée
+            document.getElementById("player2-bracket").textContent = player2Data.bracket;
+            // document.getElementById("player2-icon").src = player2Data.icon; // Ligne retirée car l'icône est un div
+            // document.getElementById("player2-flag").src = player2Data.flag; // Ligne retirée
+            document.getElementById("player2-video-bg").src = player2Data.videoBackground;
+
+            // Mise à jour des titres du match
+            document.getElementById("match-title-top").textContent = matchData.titleTop;
+            document.getElementById("match-title-bottom").textContent = matchData.titleBottom;
+
+            // Mise à jour des textes de la barre du bas
+            document.getElementById("grand-final-text").textContent = matchData.grandFinalText;
+            document.getElementById("kingdom-text").textContent = matchData.kingdomText;
+        }
+
+        // Appelle la fonction de mise à jour une fois que le DOM est chargé
+        document.addEventListener("DOMContentLoaded", updateOverlay);
+
+        // Vous pouvez ajouter un intervalle ici si vous voulez que les données se rafraîchissent
+        // automatiquement à partir de ces variables (par exemple, si vous les modifiez via une interface externe)
+        // setInterval(updateOverlay, 1000); // Décommenter pour rafraîchir toutes les secondes
+    </script>
+</body>
+</html>
